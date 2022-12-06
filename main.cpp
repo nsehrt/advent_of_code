@@ -365,6 +365,61 @@ std::string day5_2()
     return result;
 }
 
+
+int day6_1()
+{
+    std::ifstream input("day6.txt");
+    std::string line;
+
+    std::getline(input, line);
+
+    for(int i = 3; i < line.size(); i++)
+    {
+        std::unordered_map<char, int> map{};
+
+        map[line[i-3]] += 1;
+        map[line[i-2]] += 1;
+        map[line[i-1]] += 1;
+        map[line[i]] += 1;
+        
+        if(std::ranges::none_of(map, [](const auto& p){return p.second > 1;}))
+        {
+            return i+1;
+        }
+
+    }
+
+    return 0;
+}
+
+
+int day6_2()
+{
+    std::ifstream input("day6.txt");
+    std::string line;
+
+    std::getline(input, line);
+
+    for(int i = 13; i < line.size(); i++)
+    {
+        std::unordered_map<char, int> map{};
+
+        for(int j = 0; j < 14; j++)
+        {
+            map[line[i-j]] += 1;
+        }
+    
+        
+        if(std::ranges::none_of(map, [](const auto& p){return p.second > 1;}))
+        {
+            return i+1;
+        }
+
+    }
+
+    return 0;
+}
+
 int main()
 {
     std::cout << "Day 1_1: " << day1_1() << "\n";
@@ -377,4 +432,6 @@ int main()
     std::cout << "Day 4_2: " << day4_2() << "\n";
     std::cout << "Day 5_1: " << day5_1() << "\n";
     std::cout << "Day 5_2: " << day5_2() << "\n";
+    std::cout << "Day 6_1: " << day6_1() << "\n";
+    std::cout << "Day 6_2: " << day6_2() << "\n";
 }
