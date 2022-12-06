@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <map>
 #include <sstream>
+#include <set>
 #include <stack>
 
 std::vector<std::string> split (const std::string& s, const std::string& delimiter) {
@@ -375,14 +376,14 @@ int day6_1()
 
     for(int i = 3; i < line.size(); i++)
     {
-        std::unordered_map<char, int> map{};
+        std::set<char> set;
 
-        map[line[i-3]] += 1;
-        map[line[i-2]] += 1;
-        map[line[i-1]] += 1;
-        map[line[i]] += 1;
+        for(int j = 0; j < 4; j++)
+        {
+            set.insert(line[i-j]);
+        }
         
-        if(std::ranges::none_of(map, [](const auto& p){return p.second > 1;}))
+        if(set.size() == 4)
         {
             return i+1;
         }
@@ -402,15 +403,14 @@ int day6_2()
 
     for(int i = 13; i < line.size(); i++)
     {
-        std::unordered_map<char, int> map{};
+        std::set<char> set;
 
         for(int j = 0; j < 14; j++)
         {
-            map[line[i-j]] += 1;
+            set.insert(line[i-j]);
         }
-    
         
-        if(std::ranges::none_of(map, [](const auto& p){return p.second > 1;}))
+        if(set.size() == 14)
         {
             return i+1;
         }
