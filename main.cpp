@@ -420,6 +420,209 @@ int day6_2()
     return 0;
 }
 
+
+struct FileSystemEntry
+{
+    FileSystemEntry(const std::string& name, int size, FileSystemEntry* parent) : name(name), type(size>0), size(size), parent(parent){}
+    std::string name{};
+    bool type = false;
+    int size = 0;
+    FileSystemEntry* parent = nullptr;
+    std::vector<FileSystemEntry> children{};
+};
+
+void printFileSystem(FileSystemEntry* ptr, const int depth = 0)
+{
+    std::cout << std::string(depth, '\t') << "- " << ptr->name << (!ptr->type ? " (dir), " + std::to_string(ptr->size) + ")" : " (file, " + std::to_string(ptr->size) + ")") << "\n";
+
+    for(auto& elem : ptr->children)
+    {
+        printFileSystem(&elem, depth + 1);
+    }
+}
+
+void calculateFileSizes(FileSystemEntry* ptr)
+{
+    if(ptr->type)
+    {
+        FileSystemEntry* temp = ptr->parent;
+        while(temp != nullptr)
+        {
+            temp->size += ptr->size;
+            temp = temp->parent;
+        }
+    }
+
+    for(auto& elem : ptr->children)
+    {
+        calculateFileSizes(&elem);
+    }
+}
+
+int findBigDirectories(FileSystemEntry* ptr)
+{
+    int result = 0;
+
+    if(ptr->size < 100000 && !ptr->type)
+    {
+        result += ptr->size;
+    }
+
+    for(auto& elem : ptr->children)
+    {
+        result += findBigDirectories(&elem);
+    }
+
+    return result;
+}
+
+int day7_1()
+{
+    std::ifstream input("day7.txt");
+    std::string line;
+
+    FileSystemEntry root{"/", 0, nullptr};
+    FileSystemEntry* cwd = nullptr;
+
+    while(std::getline(input, line))
+    {
+        if(line.at(0) == '$')
+        {
+            const auto cmd = split(line, " ");
+            if(cmd.at(1) == "cd")
+            {
+                if(cmd.at(2) == "/")
+                {
+                    cwd = &root;
+                }
+                else if(cmd.at(2) == "..")
+                {
+                    cwd = cwd->parent;
+                }
+                else
+                {
+                    for(auto& children : cwd->children)
+                    {
+                        if(children.name == cmd.at(2))
+                        {
+                            cwd = &children;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        else //ls output
+        {
+            const auto output = split(line, " ");
+
+            if(output.at(0) == "dir")
+            {
+                cwd->children.emplace_back(output.at(1), 0, cwd);
+            }
+            else
+            {
+                cwd->children.emplace_back(output.at(1), std::stoi(output.at(0)), cwd);
+            }
+        }
+    }
+    
+    calculateFileSizes(&root);
+
+    //std::cout <<"\n";
+    //printFileSystem(&root);
+
+
+
+    return findBigDirectories(&root);
+}
+
+int findToDelete(FileSystemEntry* ptr, const int required, const int smallest = INT_MAX)
+{
+    int result = -1;
+
+    if(!ptr->type && ptr->size >= required && ptr->size <= smallest)
+    {
+        result = ptr->size;
+    }
+
+    for(auto& elem : ptr->children)
+    {
+        if(elem.type) continue;
+        const int r = findToDelete(&elem, required, smallest);
+        if(r != -1){
+            result = std::min(result, r);
+        }
+        
+    }
+
+    return result;
+}
+
+int day7_2()
+{
+    std::ifstream input("day7.txt");
+    std::string line;
+
+    FileSystemEntry root{"/", 0, nullptr};
+    FileSystemEntry* cwd = nullptr;
+    constexpr int fileSystemSize = 70000000;
+    constexpr int requiredSize = 30000000;
+
+    while(std::getline(input, line))
+    {
+        if(line.at(0) == '$')
+        {
+            const auto cmd = split(line, " ");
+            if(cmd.at(1) == "cd")
+            {
+                if(cmd.at(2) == "/")
+                {
+                    cwd = &root;
+                }
+                else if(cmd.at(2) == "..")
+                {
+                    cwd = cwd->parent;
+                }
+                else
+                {
+                    for(auto& children : cwd->children)
+                    {
+                        if(children.name == cmd.at(2))
+                        {
+                            cwd = &children;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        else //ls output
+        {
+            const auto output = split(line, " ");
+
+            if(output.at(0) == "dir")
+            {
+                cwd->children.emplace_back(output.at(1), 0, cwd);
+            }
+            else
+            {
+                cwd->children.emplace_back(output.at(1), std::stoi(output.at(0)), cwd);
+            }
+        }
+    }
+    
+    calculateFileSizes(&root);
+
+    //std::cout <<"\n";
+    //printFileSystem(&root);
+
+    const int required = requiredSize - (fileSystemSize - root.size);
+    return findToDelete(&root, required);
+}
+
+
+
 int main()
 {
     std::cout << "Day 1_1: " << day1_1() << "\n";
@@ -434,4 +637,6 @@ int main()
     std::cout << "Day 5_2: " << day5_2() << "\n";
     std::cout << "Day 6_1: " << day6_1() << "\n";
     std::cout << "Day 6_2: " << day6_2() << "\n";
+    std::cout << "Day 7_1: " << day7_1() << "\n";
+    std::cout << "Day 7_2: " << day7_2() << "\n";
 }
