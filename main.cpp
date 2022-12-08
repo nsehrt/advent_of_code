@@ -621,6 +621,150 @@ int day7_2()
     return findToDelete(&root, required);
 }
 
+int day8_1()
+{
+    int result = 0;
+    std::ifstream input("day8.txt");
+    std::string line;
+    std::vector<int> trees;
+    int width{};
+    int height{};
+
+    while(std::getline(input, line))
+    {
+        for(const auto c : line)
+        {
+            trees.push_back(c - '0');
+        }
+        width = line.size();
+        height++;
+    }
+
+    for(int y = 1; y < height - 1; y++)
+    {
+        for(int x = 1; x < width - 1; x++)
+        {
+            const int current = trees.at(y*width + x);
+
+            bool left = true;
+            for(int i = 0; i < x; i++)
+            {
+                if(trees.at(y*width+i) >= current)
+                {
+                    left = false;
+                }
+            }
+
+            if(left){result++; continue;}
+
+            bool right = true;
+            for(int i = x + 1; i < width; i++)
+            {
+                if(trees.at(y*width+i) >= current)
+                {
+                    right = false;
+                }
+            }
+
+            if(right){result++; continue;}
+
+            bool top = true;
+            for(int i = 0; i < y; i++)
+            {
+                if(trees.at(i*width+x) >= current)
+                {
+                    top = false;
+                }
+            }
+
+            if(top){result++; continue;}
+
+            bool bot = true;
+            for(int i = y+1; i < height; i++)
+            {
+                if(trees.at(i*width+x) >= current)
+                {
+                    bot = false;
+                }
+            }
+
+            if(bot){result++; continue;}
+
+        }
+      
+    }
+
+    result += 2 * width + (2*height) - 4;
+
+    return result;
+}
+
+
+int day8_2()
+{
+    int result = 0;
+    std::ifstream input("day8.txt");
+    std::string line;
+    std::vector<int> trees;
+    int width{};
+    int height{};
+
+    while(std::getline(input, line))
+    {
+        for(const auto c : line)
+        {
+            trees.push_back(c - '0');
+        }
+        width = line.size();
+        height++;
+    }
+
+    for(int y = 1; y < height - 1; y++)
+    {
+        for(int x = 1; x < width - 1; x++)
+        {
+            const int current = trees.at(y*width + x);
+            int scenic_r = 0;
+            int scenic_l = 0;
+            int scenic_b = 0;
+            int scenic_t = 0;
+
+            for(int i = x+1; i < width; i++)
+            {
+                scenic_r++;
+
+                if(trees.at(y*width + i) >= current)
+                    break;
+            }
+
+            for(int i = x-1; i >= 0; i--)
+            {
+                scenic_l++;
+
+                if(trees.at(y*width + i) >= current)
+                    break;
+            }
+
+            for(int i = y+1; i < height; i++)
+            {
+                scenic_b++;
+                if(trees.at(i*width + x) >= current)
+                    break;
+            }
+
+            for(int i = y-1; i >= 0; i--)
+            {
+                scenic_t++;
+                if(trees.at(i*width + x) >= current)
+                    break;
+            }
+
+            result = std::max(result, scenic_r * scenic_b * scenic_l * scenic_t);
+        }
+    }
+
+    return result;
+}
 
 
 int main()
@@ -639,4 +783,6 @@ int main()
     std::cout << "Day 6_2: " << day6_2() << "\n";
     std::cout << "Day 7_1: " << day7_1() << "\n";
     std::cout << "Day 7_2: " << day7_2() << "\n";
+    std::cout << "Day 8_1: " << day8_1() << "\n";
+    std::cout << "Day 8_2: " << day8_2() << "\n";
 }
