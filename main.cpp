@@ -8,6 +8,7 @@
 #include <sstream>
 #include <set>
 #include <stack>
+#include <array>
 
 std::vector<std::string> split (const std::string& s, const std::string& delimiter) {
     std::size_t pos_start = 0, pos_end, delim_len = delimiter.length();
@@ -767,6 +768,215 @@ int day8_2()
 }
 
 
+template<typename T>
+struct Vector
+{
+    Vector() = default;
+    Vector(const T _x, const T _y) : x(_x), y(_y) {}
+    T x{};
+    T y{};
+
+    float mag(){return std::sqrt(x*x+y*y);}
+    Vector<T> abs(){return {std::abs(x), std::abs(y)};}
+
+    friend bool operator< (const auto& lhs, const auto& rhs){ return lhs.x < rhs.x || (lhs.x == rhs.x && lhs.y < rhs.y); } 
+    bool operator== (const auto& other){ return x == other.x && y == other.y; }
+    bool operator!= (const auto& other){ return !operator==(other); }
+    Vector<T> operator+ (const auto& other) { return {x + other.x, y + other.y}; }
+    Vector<T> operator- (const auto& other) { return {x - other.x, y - other.y}; }
+    Vector<T>& operator-= (const auto& other) { x -= other.x; y -= other.y; return *this; }
+    Vector<T>& operator+= (const auto& other) { x += other.x; y += other.y; return *this; }
+    friend std::ostream& operator<< (std::ostream& os, const auto& value){os << value.x << " | " << value.y; return os;}
+};
+
+using Vec2i = Vector<int>;
+
+int day9_1()
+{
+    std::ifstream input("day9.txt");
+    std::string line;
+    std::vector<Vec2i> moves;
+    std::set<Vec2i> visited;
+    Vec2i head{};
+    Vec2i tail{};
+
+    while(std::getline(input, line))
+    {
+        const auto splitStr = split(line, " ");
+        Vec2i dir{};
+        if(splitStr.at(0) == "R")
+        {
+            dir = {1,0};
+        }
+        if(splitStr.at(0) == "D")
+        {
+            dir = {0,1};
+        }
+        if(splitStr.at(0) == "L")
+        {
+            dir = {-1,0};
+        }
+        if(splitStr.at(0) == "U")
+        {
+            dir = {0,-1};
+        }
+
+        for(int i = 0; i < std::stoi(splitStr.at(1)); i++)
+        {
+            moves.push_back(dir);
+        }
+    }
+
+    //std::cout << "\n";
+    for(const auto& m : moves)
+    {
+        head += m;
+
+        //std::cout << "Head: " << head << "\n";
+        if((head - tail).mag() > 1.5f)
+        {
+            if(head.x == tail.x || head.y == tail.y)
+            {
+                tail += m;
+            }else{
+                auto diff = head - tail;
+                diff.x /= std::abs(diff.x);
+                diff.y /= std::abs(diff.y);
+                tail += diff;
+            }
+        }
+        //std::cout << "Tail: " << tail << "\n\n";
+
+        visited.insert(tail);
+
+        // for(int y = -4; y < 1; y++)
+        // {
+        //     for(int x = 0; x < 6; x++)
+        //     {
+        //         if(Vec2i{x, y} == head)
+        //         {
+        //             std::cout<<"H";
+        //         }
+        //         else if(Vec2i{x,y} == tail)
+        //         {
+        //             std::cout<<"T";
+        //         }
+        //         else if(visited.contains(Vec2i{x,y}))
+        //         {
+        //             std::cout<<"#";
+        //         }
+        //         else{
+        //             std::cout<<".";
+        //         }
+        //     }
+        //     std::cout << "\n";
+        // }
+        // std::cout << "\n";
+    }
+
+    return visited.size();
+}
+
+
+int day9_2()
+{
+    std::ifstream input("day9.txt");
+    std::string line;
+    std::vector<Vec2i> moves;
+    std::set<Vec2i> visited;
+    std::array<Vec2i, 10> rope{};
+
+    while(std::getline(input, line))
+    {
+        const auto splitStr = split(line, " ");
+        Vec2i dir{};
+        if(splitStr.at(0) == "R")
+        {
+            dir = {1,0};
+        }
+        if(splitStr.at(0) == "D")
+        {
+            dir = {0,1};
+        }
+        if(splitStr.at(0) == "L")
+        {
+            dir = {-1,0};
+        }
+        if(splitStr.at(0) == "U")
+        {
+            dir = {0,-1};
+        }
+
+        for(int i = 0; i < std::stoi(splitStr.at(1)); i++)
+        {
+            moves.push_back(dir);
+        }
+    }
+
+    for(const auto& m : moves)
+    {
+        rope[0] += m;
+
+        for(int i = 0; i < rope.size()-1; i++)
+        {
+            auto& head = rope[i];
+            auto& tail = rope[i+1];
+
+            if((head - tail).mag() > 1.5f)
+            {
+                auto diff = head - tail;
+                if(diff.x != 0) diff.x /= std::abs(diff.x);
+                if(diff.y != 0) diff.y /= std::abs(diff.y);
+                tail += diff;
+            }
+        }
+
+        visited.insert(rope[9]);
+   
+        // for(int y = -20; y < 21; y++)
+        // {
+        //     for(int x = -20; x < 21; x++)
+        //     {
+        //         int c = 0;
+        //         bool w = false;
+        //         for(const auto& r : rope)
+        //         {
+        //             if(r == Vec2i{x,y})
+        //             {
+        //                 if(c == 0)
+        //                 {
+        //                     std::cout << "H";
+        //                 }
+        //                 else{
+        //                     std::cout << c;
+        //                 }
+                        
+        //                 w = true;
+        //                 continue;
+        //             }
+        //             c++;
+        //         }
+
+        //         if(w) continue;
+        //         if(visited.contains(Vec2i{x,y}))
+        //         {
+        //             std::cout<<"#";
+        //         }
+        //         else{
+        //             std::cout<<".";
+        //         }
+        //     }
+        //     std::cout << "\n";
+        // }
+        // std::cout << "\n";
+    }
+
+    return visited.size();
+
+    return 0;
+}
+
+
 int main()
 {
     std::cout << "Day 1_1: " << day1_1() << "\n";
@@ -785,4 +995,6 @@ int main()
     std::cout << "Day 7_2: " << day7_2() << "\n";
     std::cout << "Day 8_1: " << day8_1() << "\n";
     std::cout << "Day 8_2: " << day8_2() << "\n";
+    std::cout << "Day 9_1: " << day9_1() << "\n";
+    std::cout << "Day 9_2: " << day9_2() << "\n";
 }
