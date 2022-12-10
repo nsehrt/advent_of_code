@@ -976,6 +976,88 @@ int day9_2()
     return 0;
 }
 
+int day10_1()
+{
+    int result = 0;
+    std::vector<int> values{};
+    int reg = 1;
+    std::ifstream input("day10.txt");
+    std::string line;
+
+    while(std::getline(input, line))
+    {
+        const auto cmd = split(line, " ");
+        const int regP = reg;
+        if(cmd.at(0) == "noop")
+        {
+            values.push_back(reg);
+        }
+        else if(cmd.at(0) == "addx")
+        {
+            const int p = std::stoi(cmd.at(1));
+            values.push_back(reg);
+            values.push_back(reg);
+            reg = reg + p;
+        }
+    }
+
+    // std::cout << "\n";
+    // int c = 1;
+    // for(const auto i : values)
+    // {
+    //     std::cout << "cycle " << c++ << ": " << i << "\n";
+    // }
+    return values[19]*20+values[59]*60+values[99]*100+values[139]*140+values[179]*180+values[219]*220;
+}
+
+void day10_2()
+{
+    int result = 0;
+    std::vector<int> values{};
+    int reg = 1;
+    std::ifstream input("day10.txt");
+    std::string line;
+
+    const auto printPixel = [&](int cycle, int spritePos)
+    {
+        if(cycle % 40 == 0){std::cout << "\n";}
+
+        const int pos = cycle % 40;
+        if(pos > spritePos - 2 && pos < spritePos + 2)
+        {
+            std::cout << "#";
+        }
+        else{
+            std::cout << " ";
+        }
+    
+    };
+
+
+    while(std::getline(input, line))
+    {
+        const auto cmd = split(line, " ");
+        const int regP = reg;
+        if(cmd.at(0) == "noop")
+        {
+            values.push_back(reg);
+        }
+        else if(cmd.at(0) == "addx")
+        {
+            const int p = std::stoi(cmd.at(1));
+            values.push_back(reg);
+            values.push_back(reg);
+            reg = reg + p;
+        }
+    }
+    
+    for(int i = 0; i < values.size(); i++)
+    {
+        printPixel(i, values[i]);
+    }
+
+}
+
 
 int main()
 {
@@ -997,4 +1079,6 @@ int main()
     std::cout << "Day 8_2: " << day8_2() << "\n";
     std::cout << "Day 9_1: " << day9_1() << "\n";
     std::cout << "Day 9_2: " << day9_2() << "\n";
+    std::cout << "Day 10_1: " << day10_1() << "\n";
+    std::cout << "Day 10_2: \n" << "\n"; day10_2();
 }
