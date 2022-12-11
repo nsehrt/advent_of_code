@@ -1058,9 +1058,203 @@ void day10_2()
 
 }
 
+struct Monkey
+{
+    std::vector<std::uint64_t> items{};
+    std::string operation{};
+    int test{};
+    int trueTo{};
+    int falseTo{};
+    int inspections{};
+
+    friend std::ostream& operator<< (std::ostream& os, const Monkey& m)
+    {
+        os << "Monkey holds the items: ";
+        for(const auto i : m.items)
+        {
+            os << i << " ";
+        }
+        os << "\nIt inspected " << m.inspections << " times.";
+        return os;
+    }
+};
+
+
+int day11_1()
+{
+    std::ifstream input("day11.txt");
+    std::string line;
+    std::vector<std::string> lines;
+    std::vector<Monkey> monkeys;
+    constexpr int rounds = 20;
+
+    while(std::getline(input, line))
+    {
+        if(!line.empty())
+        {
+            lines.push_back(line);
+        }
+    }
+
+    for(int i = 0; i < lines.size() / 6; i++)
+    {
+        Monkey monkey;
+        const auto items = split(lines[i*6+1].substr(18), ", ");
+        for(const auto i : items)
+        {
+            monkey.items.push_back(std::stoi(i));
+        }
+        monkey.operation = lines[i*6+2].substr(19);
+        monkey.test = std::stoi(lines[i*6+3].substr(21));
+        monkey.trueTo = std::stoi(lines[i*6+4].substr(29));
+        monkey.falseTo = std::stoi(lines[i*6+5].substr(30));
+
+        monkeys.push_back(monkey);
+    }
+
+    const auto worry = [](int value, const std::string& op)->int
+    {
+        const auto cmd = split(op, " ");
+        const int right = cmd.at(2) == "old" ? value : std::stoi(cmd.at(2));
+        if(cmd.at(1) == "+")
+        {
+            return value + right;
+        }
+        else if(cmd.at(1) == "*")
+        {
+            return value * right;
+        }
+        return 0;
+    };
+
+    for(int i = 0; i < rounds; i++)
+    {
+        for(int k = 0; k < monkeys.size(); k++)
+        {
+            auto& m = monkeys[k];
+            for(int j = 0; j < m.items.size(); j++)
+            {
+                m.items[j] = worry(m.items[j], m.operation) / 3;
+                m.inspections++;
+
+                if(m.items[j] % m.test == 0)
+                {
+                    monkeys[m.trueTo].items.push_back(m.items[j]);
+                    //std::cout << "Monkey " << k << " throws item with value " << m.items[j] << " to monkey " << m.trueTo << ".\n";
+                }
+                else{
+                    monkeys[m.falseTo].items.push_back(m.items[j]);
+                    //std::cout << "Monkey " << k << " throws item with value " << m.items[j] << " to monkey " << m.falseTo << ".\n";
+                }
+            }
+            
+            m.items.clear();
+        }
+    }
+
+    std::vector<int> active;
+    for(const auto& m : monkeys)
+    {
+        active.push_back(m.inspections);
+        //std::cout << m << "\n";
+    }
+    std::ranges::sort(active);
+    std::ranges::reverse(active);
+
+    return active[0] * active[1];
+}
+
+
+std::uint64_t day11_2()
+{
+    std::ifstream input("day11.txt");
+    std::string line;
+    std::vector<std::string> lines;
+    std::vector<Monkey> monkeys;
+    constexpr int rounds = 10000;
+
+    while(std::getline(input, line))
+    {
+        if(!line.empty())
+        {
+            lines.push_back(line);
+        }
+    }
+
+    for(int i = 0; i < lines.size() / 6; i++)
+    {
+        Monkey monkey;
+        const auto items = split(lines[i*6+1].substr(18), ", ");
+        for(const auto i : items)
+        {
+            monkey.items.push_back(std::stoi(i));
+        }
+        monkey.operation = lines[i*6+2].substr(19);
+        monkey.test = std::stoi(lines[i*6+3].substr(21));
+        monkey.trueTo = std::stoi(lines[i*6+4].substr(29));
+        monkey.falseTo = std::stoi(lines[i*6+5].substr(30));
+
+        monkeys.push_back(monkey);
+    }
+
+    const auto worry = [](int value, const std::string& op)->std::uint64_t
+    {
+        const auto cmd = split(op, " ");
+        const std::uint64_t right = cmd.at(2) == "old" ? value : std::stoi(cmd.at(2));
+        if(cmd.at(1) == "+")
+        {
+            return value + right;
+        }
+        else if(cmd.at(1) == "*")
+        {
+            return value * right;
+        }
+        return 0;
+    };
+
+    int smod = 1;
+    for(auto &m : monkeys){smod *= m.test;}
+
+    for(int i = 0; i < rounds; i++)
+    {
+        for(int k = 0; k < monkeys.size(); k++)
+        {
+            auto& m = monkeys[k];
+            for(int j = 0; j < m.items.size(); j++)
+            {
+                m.items[j] = worry(m.items[j], m.operation) % smod;
+                m.inspections++;
+
+                if(m.items[j] % m.test == 0)
+                {
+                    monkeys[m.trueTo].items.push_back(m.items[j]);
+                    //std::cout << "Monkey " << k << " throws item with value " << m.items[j] << " to monkey " << m.trueTo << ".\n";
+                }
+                else{
+                    monkeys[m.falseTo].items.push_back(m.items[j]);
+                    //std::cout << "Monkey " << k << " throws item with value " << m.items[j] << " to monkey " << m.falseTo << ".\n";
+                }
+            }
+            
+            m.items.clear();
+        }
+    }
+
+    std::vector<std::int64_t> active;
+    for(const auto& m : monkeys)
+    {
+        active.push_back(m.inspections);
+        //std::cout << m << "\n";
+    }
+    std::ranges::sort(active);
+    std::ranges::reverse(active);
+
+    return active[0] * active[1];
+}
 
 int main()
 {
+    std::ios_base::sync_with_stdio(false); 
     std::cout << "Day 1_1: " << day1_1() << "\n";
     std::cout << "Day 1_2: " << day1_2() << "\n";
     std::cout << "Day 2_1: " << day2_1() << "\n";
@@ -1080,5 +1274,7 @@ int main()
     std::cout << "Day 9_1: " << day9_1() << "\n";
     std::cout << "Day 9_2: " << day9_2() << "\n";
     std::cout << "Day 10_1: " << day10_1() << "\n";
-    std::cout << "Day 10_2: \n" << "\n"; day10_2();
+    std::cout << "Day 10_2: "; day10_2(); std::cout << "\n";
+    std::cout << "Day 11_1: " << day11_1() << "\n";
+    std::cout << "Day 11_2: " << day11_2() << "\n";
 }
