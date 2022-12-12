@@ -1252,6 +1252,174 @@ std::uint64_t day11_2()
     return active[0] * active[1];
 }
 
+
+int day12_1()
+{
+    std::ifstream input("day12.txt");
+    std::string line;
+    std::vector<char> map;
+    int start{};
+    int end{};
+    int result{};
+
+    int x = 0;
+    int y = 0;
+    int w = 0;
+    while(std::getline(input, line))
+    {
+        w = line.size();
+        for(const char c : line)
+        {
+            if(c == 'S')
+            {
+                map.push_back('a');
+                start = w * y + x;
+            }else if(c == 'E')
+            {
+                map.push_back('z');
+                end = w * y + x;
+            }
+            else
+            {
+                map.push_back(c);
+            }
+            ++x;
+        }
+        x = 0;
+        ++y;
+    }
+
+    std::vector<bool> visited(map.size());
+    std::deque<Vec2i> queue;
+    queue.push_back({0, end});
+
+    while(true)
+    {
+        const auto pair = queue.front();
+        queue.pop_front();
+
+        if(visited[pair.y])
+        {
+            continue;
+        }
+
+        visited[pair.y] = true;
+        if(map[pair.y] == 'a')
+        {
+            if(pair.y == start)
+            {
+                result = pair.x;
+                break;
+            }
+        }
+
+        for(auto d : {1, -1, -w, w}) //right, left, up, down
+        {
+            const int n = pair.y + d;
+            if(n < 0 || n > static_cast<int>(map.size()) || visited[n] || (map[pair.y] - map[n]) > 1)
+            {
+                continue;
+            }
+            queue.push_back({pair.x+1, n});
+        }
+    }
+
+    return result;
+}
+
+
+int day12_2()
+{
+    std::ifstream input("day12.txt");
+    std::string line;
+    std::vector<char> map;
+    int start{};
+    int end{};
+    int result{};
+
+    int x = 0;
+    int y = 0;
+    int w = 0;
+    while(std::getline(input, line))
+    {
+        w = line.size();
+        for(const char c : line)
+        {
+            if(c == 'S')
+            {
+                map.push_back('a');
+                start = w * y + x;
+            }else if(c == 'E')
+            {
+                map.push_back('z');
+                end = w * y + x;
+            }
+            else
+            {
+                map.push_back(c);
+            }
+            ++x;
+        }
+        x = 0;
+        ++y;
+    }
+
+    const auto pathFind = [&](int s){
+        std::vector<bool> visited(map.size());
+        std::deque<Vec2i> queue;
+        queue.push_back({0, end});
+
+        while(true)
+        {
+            if(queue.empty()) return INT_MAX; //no possible way
+            const auto pair = queue.front();
+            queue.pop_front();
+
+            if(visited[pair.y])
+            {
+                continue;
+            }
+
+            visited[pair.y] = true;
+            if(map[pair.y] == 'a')
+            {
+                if(pair.y == s)
+                {
+                    return pair.x;
+                }
+            }
+
+            for(auto d : {1, -1, -w, w}) //right, left, up, down
+            {
+                const int n = pair.y + d;
+                if(n < 0 || n > static_cast<int>(map.size()) || visited[n] || (map[pair.y] - map[n]) > 1)
+                {
+                    continue;
+                }
+                queue.push_back({pair.x+1, n});
+            }
+        }
+
+    };
+
+    std::vector<std::size_t> startIndices{};
+    for(std::size_t i = 0; i < map.size(); i++)
+    {
+        if(map[i] == 'a')
+        {
+            startIndices.push_back(i);
+        }
+    }
+
+    int min = INT_MAX;
+    for(const auto i : startIndices) //brute force all start points
+    {
+        min = std::min(min, pathFind(i));
+    }
+
+    return min;
+}
+
 int main()
 {
     std::ios_base::sync_with_stdio(false); 
@@ -1277,4 +1445,6 @@ int main()
     std::cout << "Day 10_2: "; day10_2(); std::cout << "\n";
     std::cout << "Day 11_1: " << day11_1() << "\n";
     std::cout << "Day 11_2: " << day11_2() << "\n";
+    std::cout << "Day 12_1: " << day12_1() << "\n";
+    std::cout << "Day 12_2: " << day12_2() << "\n";
 }
