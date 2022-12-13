@@ -8,7 +8,9 @@
 #include <sstream>
 #include <set>
 #include <stack>
+#include <variant>
 #include <array>
+#include <numeric>
 
 std::vector<std::string> split (const std::string& s, const std::string& delimiter) {
     std::size_t pos_start = 0, pos_end, delim_len = delimiter.length();
@@ -1420,6 +1422,184 @@ int day12_2()
     return min;
 }
 
+struct PValue : public std::variant<int, std::vector<PValue>>
+{
+    PValue() : variant(0){}
+    PValue(int v) : variant(v){}
+    PValue(const std::vector<PValue>& v) : variant(v) {}
+};
+
+
+
+int day13_1()
+{
+    std::ifstream input("day13.txt");
+
+    std::string line1;
+    std::string line2;
+    std::vector<int> right;
+    int list = 0;
+
+    while(getline(input,line1))
+    {
+        if(line1.empty())
+        {
+            continue;
+        }
+
+        list++;
+
+        getline(input, line2);
+        int i = 0, j = 0;
+
+        while(i < line1.size() && j < line2.size())
+        {
+            if(std::isdigit(line1[i]) && std::isdigit(line2[j]))
+            {
+                std::string x1{};
+                std::string x2{};
+
+                while(i < line1.size() && std::isdigit(line1[i]))
+                {
+                    x1 += line1[i];
+                    i++;
+                }
+
+                while(j < line2.size() && std::isdigit(line2[j]))
+                {
+                    x2 += line2[j];
+                    j++;
+                }
+
+                if(stoi(x1) == stoi(x2)) 
+                {
+                    continue;
+                }
+                if(stoi(x1) < stoi(x2))
+                {
+                    right.push_back(list);
+                }
+                break;
+            }
+            if(line1[i] == line2[j])
+            {
+                i++;
+                j++;
+                continue;
+            }
+            else
+            {
+                if(line1[i] == ']'){
+                    right.push_back(list);
+                    break;
+                }
+                else if(line2[j] == ']') break;
+                else if(line1[i] == '[' || line1[i] == ',')
+                { 
+                    i++;
+                    continue;
+                }
+                else if(line2[j] == '[' || line2[j] == ',')
+                {
+                    j++;
+                    continue;
+                }
+            }
+        }
+        
+        if(i == line1.size()) right.push_back(list);
+    }
+
+    int ans = 0;
+    ans = std::accumulate(right.begin(), right.end(), ans);
+    return ans;
+}
+
+
+int day13_2()
+{
+    std::fstream input("day13.txt");
+    std::string line1;
+    std::string line2;
+
+    int list = 0;
+    std::vector<std::string> signals{"[[2]]", "[[6]]"};
+    int cnt[2] = {0};
+
+    while(getline(input,line2))
+    {
+        if(line2.empty())
+        {
+            continue;
+        }
+
+        list++;
+
+        for(int x = 0; x < 2; x++){
+            line1 = signals[x];
+            int i = 0, j = 0;
+            while(i < line1.length() && j < line2.length()){
+                if(std::isdigit(line1[i]) && std::isdigit(line2[j]))
+                {
+                    std::string x1 = "", x2 = "";
+
+                    while(i < line1.size() && std::isdigit(line1[i]))
+                    {
+                        x1 += line1[i];
+                        i++;
+                    }
+
+                    while(j < line2.size() && std::isdigit(line2[j]))
+                    {
+                        x2 += line2[j];
+                        j++;
+                    }
+
+                    if(stoi(x1) == stoi(x2))
+                    {
+                        continue;
+                    } 
+
+                    if(stoi(x1) < stoi(x2))
+                    {
+                    cnt[x]++;
+                    }
+                    break;
+                }
+
+                if(line1[i] == line2[j]){
+                    i++;
+                    j++;
+                    continue;
+                }
+                else
+                {
+                    if(line1[i] == ']'){
+                    cnt[x]++;
+                    break;
+                    }
+                    else if(line2[j] == ']') break;
+                    else if(line1[i] == '[' || line1[i] == ','){ 
+                    i++;
+                    continue;
+                    }
+                    else if(line2[j] == '[' || line2[j] == ','){
+                    j++;
+                    continue;
+                    }
+                }
+            }
+            if(i == line1.length())
+            {
+                cnt[x]++;
+            }
+        }
+    }
+
+    return (list - cnt[0] + 1)*(list - cnt[1] + 2);
+}
+
+
 int main()
 {
     std::ios_base::sync_with_stdio(false); 
@@ -1447,4 +1627,6 @@ int main()
     std::cout << "Day 11_2: " << day11_2() << "\n";
     std::cout << "Day 12_1: " << day12_1() << "\n";
     std::cout << "Day 12_2: " << day12_2() << "\n";
+    std::cout << "Day 13_1: " << day13_1() << "\n";
+    std::cout << "Day 13_2: " << day13_2() << "\n";
 }
