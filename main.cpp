@@ -780,6 +780,13 @@ struct Vector
 
     float mag(){return std::sqrt(x*x+y*y);}
     Vector<T> abs(){return {std::abs(x), std::abs(y)};}
+    Vector<T> dir(const Vector<T>& v) const
+    {
+        auto diff = Vector<T>{x - v.x, y - v.y};
+        if(diff.x != 0) diff.x /= std::abs(diff.x);
+        if(diff.y != 0) diff.y /= std::abs(diff.y);
+        return diff;
+    }
 
     friend bool operator< (const auto& lhs, const auto& rhs){ return lhs.x < rhs.x || (lhs.x == rhs.x && lhs.y < rhs.y); } 
     bool operator== (const auto& other){ return x == other.x && y == other.y; }
@@ -1422,13 +1429,6 @@ int day12_2()
     return min;
 }
 
-struct PValue : public std::variant<int, std::vector<PValue>>
-{
-    PValue() : variant(0){}
-    PValue(int v) : variant(v){}
-    PValue(const std::vector<PValue>& v) : variant(v) {}
-};
-
 
 
 int day13_1()
@@ -1600,6 +1600,389 @@ int day13_2()
 }
 
 
+// int day14_1()
+// {
+//     std::ifstream input("day14.txt");
+//     std::string line;
+//     std::set<Vec2i> inputVecs;
+
+//     const auto toVec = [](const std::string& str) -> Vec2i
+//     {
+//         const auto spl = split(str, ",");
+//         return {std::stoi(spl.at(0)), std::stoi(spl.at(1))};
+//     };
+
+//     Vec2i topLeft{INT_MAX, 0};
+//     Vec2i bottomRight{-INT_MAX, -INT_MAX};
+
+//     while(std::getline(input, line))
+//     {
+        
+//         const auto coordList = split(line, " -> ");
+        
+//         for(int i = 0; i < coordList.size() - 1; i++)
+//         {
+//             auto src = toVec(coordList[i]);
+//             const auto dst = toVec(coordList[i+1]);
+//             const auto dir = dst.dir(src);
+
+//             bool br = false;
+//             while(true)
+//             {
+//                 if(src.x < topLeft.x) topLeft.x = src.x;
+//                 if(src.y < topLeft.y) topLeft.y = src.y;
+//                 if(src.x > bottomRight.x) bottomRight.x = src.x;
+//                 if(src.y > bottomRight.y) bottomRight.y = src.y;
+//                 inputVecs.insert(src);
+//                 src += dir;
+
+//                 if(br) break;
+//                 if(src == dst){
+//                     br = true;
+//                 }
+//             }
+//         }
+//     }
+
+//     enum class GroundType
+//     {
+//         Air,
+//         Stone,
+//         Sand,
+//         Source
+//     };
+
+//     std::vector<GroundType> cave;
+//     const int width = (bottomRight.x - topLeft.x + 1);
+//     const int height = (bottomRight.y - topLeft.y + 1);
+//     cave.resize(width * height);
+
+//     for(const auto& e : inputVecs)
+//     {
+//         cave[(e.y - topLeft.y) * width + (e.x - topLeft.x)] = GroundType::Stone;
+//     }
+//     const auto origin = Vec2i{500 - topLeft.x, 0};
+//     cave[origin.x] = GroundType::Source;
+
+//     const auto printCave = [&](){
+//         std::cout << "\n";
+//         for(int y = 0; y < height; y++)
+//         {
+//             for(int x = 0; x < width; x++)
+//             {
+//                 const auto t = cave[y * width + x];
+//                 if(t == GroundType::Air)
+//                 {
+//                     std::cout << ".";
+//                 }
+//                 else if(t == GroundType::Stone)
+//                 {
+//                     std::cout << "#";
+//                 }
+//                 else if(t == GroundType::Sand)
+//                 {
+//                     std::cout << "O";
+//                 }
+//                 else
+//                 {
+//                     std::cout << "+";
+//                 }
+//             }
+//             std::cout << "\n";
+//         }
+//     };
+
+//     //printCave();
+
+//     int sandRested = 0;
+
+//     const auto notInBounds = [height, width](const Vec2i& v)->bool
+//     {
+//         return v.x < 0 || v.x > width || v.y < 0 || v.y > height;
+//     };
+
+//     //pour sand
+//     while(true)
+//     {
+//         Vec2i newSand = origin;
+
+//         while(true)
+//         {
+//             const auto down = newSand + Vec2i{0,1};
+//             const auto left = newSand + Vec2i{-1,1};
+//             const auto right = newSand + Vec2i{1,1};
+
+//             if(!notInBounds(right) && cave[down.y * width + down.x] == GroundType::Air)
+//             {
+//                 newSand = down;
+//             }
+//             else if(!notInBounds(right) && cave[left.y * width + left.x] == GroundType::Air)
+//             {
+//                 newSand = left;
+//             }
+//             else if(!notInBounds(right) && cave[right.y * width + right.x] == GroundType::Air)
+//             {
+//                 newSand = right;
+//             }
+//             else
+//             {
+//                 if(newSand.y >= height)
+//                 {
+//                     //printCave();
+//                     return sandRested;
+//                 }else{
+//                     sandRested++;
+//                     cave[newSand.y * width + newSand.x] = GroundType::Sand;
+//                     break;
+//                 }
+//             }
+//         }
+//     }
+
+
+//     return 0;
+// }
+
+struct pair_hash {
+    template <class T1, class T2>
+    std::size_t operator () (const std::pair<T1,T2> &p) const {
+        auto h1 = std::hash<T1>{}(p.first);
+        auto h2 = std::hash<T2>{}(p.second);
+        return h1 ^ h2;  
+    }
+};
+
+int day14_1() //redone because map > vector for part 2
+{
+    std::ifstream input("day14.txt");
+    std::string line;
+    enum class GroundType
+    {
+        Stone,
+        Sand
+    };
+    
+    std::unordered_map<std::pair<int, int>, GroundType, pair_hash> cave;
+
+    const auto toVec = [](const std::string& str) -> std::pair<int, int>
+    {
+        const auto spl = split(str, ",");
+        return {std::stoi(spl.at(0)), std::stoi(spl.at(1))};
+    };
+
+    std::pair<int, int> topLeft{INT_MAX, 0};
+    std::pair<int, int> bottomRight{-INT_MAX, -INT_MAX};
+
+    while(std::getline(input, line))
+    {
+        const auto coordList = split(line, " -> ");
+        
+        for(int i = 0; i < coordList.size() - 1; i++)
+        {
+            auto src = toVec(coordList[i]);
+            const auto dst = toVec(coordList[i+1]);
+
+            auto dir = std::pair<int, int>{dst.first - src.first, dst.second - src.second};
+            if(dir.first != 0) dir.first /= std::abs(dir.first);
+            if(dir.second != 0) dir.second /= std::abs(dir.second);
+            
+            bool br = false;
+            while(true)
+            {
+                if(src.first < topLeft.first) topLeft.first = src.first;
+                if(src.second < topLeft.second) topLeft.second = src.second;
+                if(src.first > bottomRight.first) bottomRight.first = src.first;
+                if(src.second > bottomRight.second) bottomRight.second = src.second;
+                cave[src] = GroundType::Stone;
+                src.first += dir.first;
+                src.second += dir.second;
+
+                if(br) break;
+                if(src == dst){
+                    br = true;
+                }
+            }
+        }
+    }
+
+    const int width = (bottomRight.first - topLeft.first + 1);
+    const int height = (bottomRight.second - topLeft.second + 1);
+    const auto origin = std::pair<int, int>{500 , 0};
+    int sandRested = 0;
+
+    //pour sand
+    while(true)
+    {
+        auto newSand = origin;
+
+        while(true)
+        {
+            const auto down = std::pair<int, int>{newSand.first, newSand.second + 1};
+            const auto left = std::pair<int, int>{newSand.first - 1, newSand.second + 1};
+            const auto right = std::pair<int, int>{newSand.first + 1, newSand.second + 1};
+
+            if(newSand.second >= height)
+            {
+                return sandRested;
+            }
+
+            if(!cave.contains(down))
+            {
+                newSand = down;
+            }
+            else if(!cave.contains(left))
+            {
+                newSand = left;
+            }
+            else if(!cave.contains(right))
+            {
+                newSand = right;
+            }
+            else
+            {
+                sandRested++;
+                cave[newSand] = GroundType::Sand;
+                break;
+            }
+        }
+    }
+
+
+    return 0;
+}
+
+
+int day14_2()
+{
+    std::ifstream input("day14.txt");
+    std::string line;
+    enum class GroundType
+    {
+        Stone,
+        Sand
+    };
+    
+    std::unordered_map<std::pair<int, int>, GroundType, pair_hash> cave;
+
+    const auto toVec = [](const std::string& str) -> std::pair<int, int>
+    {
+        const auto spl = split(str, ",");
+        return {std::stoi(spl.at(0)), std::stoi(spl.at(1))};
+    };
+
+    std::pair<int, int> topLeft{INT_MAX, 0};
+    std::pair<int, int> bottomRight{-INT_MAX, -INT_MAX};
+
+    while(std::getline(input, line))
+    {
+        const auto coordList = split(line, " -> ");
+        
+        for(int i = 0; i < coordList.size() - 1; i++)
+        {
+            auto src = toVec(coordList[i]);
+            const auto dst = toVec(coordList[i+1]);
+
+            auto dir = std::pair<int, int>{dst.first - src.first, dst.second - src.second};
+            if(dir.first != 0) dir.first /= std::abs(dir.first);
+            if(dir.second != 0) dir.second /= std::abs(dir.second);
+            
+            bool br = false;
+            while(true)
+            {
+                if(src.first < topLeft.first) topLeft.first = src.first;
+                if(src.second < topLeft.second) topLeft.second = src.second;
+                if(src.first > bottomRight.first) bottomRight.first = src.first;
+                if(src.second > bottomRight.second) bottomRight.second = src.second;
+                cave[src] = GroundType::Stone;
+                src.first += dir.first;
+                src.second += dir.second;
+
+                if(br) break;
+                if(src == dst){
+                    br = true;
+                }
+            }
+        }
+    }
+
+    const int width = (bottomRight.first - topLeft.first + 1);
+    const int height = (bottomRight.second - topLeft.second + 1) + 2;
+    const auto origin = std::pair<int, int>{500 , 0};
+    int sandRested = 0;
+
+    const auto printCave = [&]()
+    {
+        std::cout << "\n";
+        for(int i = 0; i < height; i++)
+        {
+            for(int j = -width; j < width; j++)
+            {
+                if(i == height - 1)
+                {
+                    std::cout << "=";
+                    continue;
+                }
+                if(cave.contains({j+500, i}))
+                {
+                    std::cout << (cave[{j+500, i}] == GroundType::Sand ? 'O' : '#');
+                }else{
+                    std::cout << "-";
+                }
+            }
+            std::cout << "\n";
+        }
+    };
+
+    //pour sand
+    while(true)
+    {
+        auto newSand = origin;
+
+        while(true)
+        {
+            const auto down = std::pair<int, int>{newSand.first, newSand.second + 1};
+            const auto left = std::pair<int, int>{newSand.first - 1, newSand.second + 1};
+            const auto right = std::pair<int, int>{newSand.first + 1, newSand.second + 1};
+
+            if(newSand.second == height - 1)
+            {
+               // sandRested++;
+                cave[newSand] = GroundType::Sand;
+                break;
+            }
+
+            if(!cave.contains(down))
+            {
+                newSand = down;
+            }
+            else if(!cave.contains(left))
+            {
+                newSand = left;
+            }
+            else if(!cave.contains(right))
+            {
+                newSand = right;
+            }
+            else
+            {
+                sandRested++;
+                cave[newSand] = GroundType::Sand;
+                //printCave();
+                if(newSand == origin)
+                {
+                    //printCave();
+                    return sandRested;
+                }
+                break;
+            }
+        }
+    }
+
+
+    return 0;
+}
+
+
 int main()
 {
     std::ios_base::sync_with_stdio(false); 
@@ -1629,4 +2012,6 @@ int main()
     std::cout << "Day 12_2: " << day12_2() << "\n";
     std::cout << "Day 13_1: " << day13_1() << "\n";
     std::cout << "Day 13_2: " << day13_2() << "\n";
+    std::cout << "Day 14_1: " << day14_1() << "\n";
+    std::cout << "Day 14_2: " << day14_2() << "\n";
 }
