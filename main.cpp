@@ -11,6 +11,8 @@
 #include <variant>
 #include <array>
 #include <numeric>
+#include <sstream>
+#include <iomanip>
 
 std::vector<std::string> split (const std::string& s, const std::string& delimiter) {
     std::size_t pos_start = 0, pos_end, delim_len = delimiter.length();
@@ -788,6 +790,10 @@ struct Vector
         return diff;
     }
 
+    int manhattan(const Vector<T>& other) const
+    {
+        return std::abs(x - other.x) + std::abs(y - other.y);
+    }
     friend bool operator< (const auto& lhs, const auto& rhs){ return lhs.x < rhs.x || (lhs.x == rhs.x && lhs.y < rhs.y); } 
     bool operator== (const auto& other){ return x == other.x && y == other.y; }
     bool operator!= (const auto& other){ return !operator==(other); }
@@ -1982,6 +1988,136 @@ int day14_2()
     return 0;
 }
 
+struct Sensor
+{
+    Sensor(int px, int py, int bx, int by) : position(px, py), nextBeacon(bx, by) {}
+    void calculateDistance()
+    {
+        distance = position.manhattan(nextBeacon);
+    }
+    Vec2i position{};
+    Vec2i nextBeacon{};
+    int distance{};
+};
+
+std::vector<int> extractInts(const std::string& str)
+{
+    std::vector<int> result{};
+    std::string temp;
+
+    int i = 0; 
+    while(i < str.size())
+    {
+        char c = str[i];
+        if(std::isdigit(c) || c == '-')
+        {
+            do
+            {
+                temp = temp + c;
+                c = str[++i];
+            } while (std::isdigit(c));
+            
+            result.push_back(std::stoi(temp));
+            temp.clear();
+        }
+        i++;
+    }
+    
+    return result;
+}
+
+int day15_1()
+{
+    std::ifstream input("day15.txt");
+    std::string line;
+    std::vector<Sensor> sensors{};
+    std::set<Vec2i> beacons{};
+
+    while(std::getline(input, line))
+    {
+        const auto numbers = extractInts(line);
+        sensors.emplace_back(numbers[0], numbers[1], numbers[2], numbers[3]);
+        sensors.back().calculateDistance();
+        beacons.insert(sensors.back().nextBeacon);
+    }
+
+    constexpr int checkRow = 2000000;
+    std::set<Vec2i> row;
+
+    for(const auto& s : sensors)
+    {
+        if(s.position.y < checkRow && s.position.y + s.distance < checkRow)
+        {
+            continue;
+        }
+        if(s.position.y > checkRow && s.position.y - s.distance > checkRow)
+        {
+            continue;
+        }
+
+        for(int x = -s.distance; x < s.distance; x++)
+        {
+            const auto pos = Vec2i{s.position.x + x, checkRow};
+            if(s.position.manhattan(pos) <= s.distance)
+            {
+                if(!beacons.contains(pos))
+                {
+                    row.insert(pos);
+                }
+            }
+        }
+    }
+
+
+    return row.size();
+}
+
+
+std::uint64_t day15_2() //warning: this is giga slow
+{
+    std::ifstream input("day15.txt");
+    std::string line;
+    std::vector<Sensor> sensors{};
+    std::set<Vec2i> beacons{};
+
+    while(std::getline(input, line))
+    {
+        const auto numbers = extractInts(line);
+        sensors.emplace_back(numbers[0], numbers[1], numbers[2], numbers[3]);
+        sensors.back().calculateDistance();
+        beacons.insert(sensors.back().nextBeacon);
+    }
+
+    std::set<Vec2i> row;
+    constexpr int searchArea = 4000000;
+
+    //std::cout << "\n";
+    for(int y = 0; y < searchArea; y++)
+    {
+        for(int x = 0; x < searchArea; x++)
+        {
+            int found = true;
+            for(const auto& s : sensors)
+            {
+                if(s.position.manhattan(Vec2i{x,y}) <= s.distance)
+                {
+                    found = false;
+                    break;
+                }
+            }
+            if(found)
+            {
+                return std::uint64_t(x) * 4000000 + y;
+            }
+        }
+        //std::cout << "\r" << std::setw(7) << y << "/" << searchArea;
+    }
+    //std::cout << std::endl;
+
+    return row.size();
+
+}
+
 
 int main()
 {
@@ -2014,4 +2150,6 @@ int main()
     std::cout << "Day 13_2: " << day13_2() << "\n";
     std::cout << "Day 14_1: " << day14_1() << "\n";
     std::cout << "Day 14_2: " << day14_2() << "\n";
+    std::cout << "Day 15_1: " << day15_1() << "\n";
+    std::cout << "Day 15_2: " << day15_2() << "\n"; //extremely slow
 }
