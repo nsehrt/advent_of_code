@@ -2118,38 +2118,89 @@ std::uint64_t day15_2() //warning: this is giga slow
 
 }
 
+struct Vec3
+{
+    Vec3(int x, int y, int z) : x(x), y(y), z(z) {}
+    int x{};
+    int y{};
+    int z{};
+
+    friend bool operator< (const Vec3& lhs, const Vec3& rhs){ return lhs.x < rhs.x || (lhs.x == rhs.x && lhs.y < rhs.y) || (lhs.x == rhs.x && lhs.y == rhs.y && lhs.z < rhs.z); } 
+    bool operator== (const auto& other){ return x == other.x && y == other.y && z == other.z; }
+    bool operator!= (const auto& other){ return !operator==(other); }
+    Vec3 operator+ (const Vec3& r) const { return {x + r.x, y + r.y, z + r.z};} 
+};
+
+int day18_1()
+{
+    std::ifstream input("day18.txt");
+    std::string line;
+    std::set<Vec3> lava;
+    int result = 0;
+
+    while(std::getline(input, line))
+    {
+        const auto spl = split(line, ",");
+        lava.insert(Vec3(std::stoi(spl.at(0)), std::stoi(spl.at(1)), std::stoi(spl.at(2))));
+    }
+
+    const std::vector<Vec3> sides = {{1,0,0},{-1,0,0},{0,1,0}, {0,-1,0},{0,0,1},{0,0,-1}};
+
+    for(const auto& v : lava)
+    {
+        for(const auto& s : sides)
+        {
+            if(!lava.contains(v + s))
+            {
+                ++result;
+            }
+        }
+    }
+
+    return result;
+}
+
+
+int day18_2()
+{
+
+
+    return 0;
+}
 
 int main()
 {
     std::ios_base::sync_with_stdio(false); 
-    std::cout << "Day 1_1: " << day1_1() << "\n";
-    std::cout << "Day 1_2: " << day1_2() << "\n";
-    std::cout << "Day 2_1: " << day2_1() << "\n";
-    std::cout << "Day 2_2: " << day2_2() << "\n";
-    std::cout << "Day 3_1: " << day3_1() << "\n";
-    std::cout << "Day 3_2: " << day3_2() << "\n";
-    std::cout << "Day 4_1: " << day4_1() << "\n";
-    std::cout << "Day 4_2: " << day4_2() << "\n";
-    std::cout << "Day 5_1: " << day5_1() << "\n";
-    std::cout << "Day 5_2: " << day5_2() << "\n";
-    std::cout << "Day 6_1: " << day6_1() << "\n";
-    std::cout << "Day 6_2: " << day6_2() << "\n";
-    std::cout << "Day 7_1: " << day7_1() << "\n";
-    std::cout << "Day 7_2: " << day7_2() << "\n";
-    std::cout << "Day 8_1: " << day8_1() << "\n";
-    std::cout << "Day 8_2: " << day8_2() << "\n";
-    std::cout << "Day 9_1: " << day9_1() << "\n";
-    std::cout << "Day 9_2: " << day9_2() << "\n";
-    std::cout << "Day 10_1: " << day10_1() << "\n";
-    std::cout << "Day 10_2: "; day10_2(); std::cout << "\n";
-    std::cout << "Day 11_1: " << day11_1() << "\n";
-    std::cout << "Day 11_2: " << day11_2() << "\n";
-    std::cout << "Day 12_1: " << day12_1() << "\n";
-    std::cout << "Day 12_2: " << day12_2() << "\n";
-    std::cout << "Day 13_1: " << day13_1() << "\n";
-    std::cout << "Day 13_2: " << day13_2() << "\n";
-    std::cout << "Day 14_1: " << day14_1() << "\n";
-    std::cout << "Day 14_2: " << day14_2() << "\n";
-    std::cout << "Day 15_1: " << day15_1() << "\n";
-    std::cout << "Day 15_2: " << day15_2() << "\n"; //extremely slow
+    // std::cout << "Day 1_1: " << day1_1() << "\n";
+    // std::cout << "Day 1_2: " << day1_2() << "\n";
+    // std::cout << "Day 2_1: " << day2_1() << "\n";
+    // std::cout << "Day 2_2: " << day2_2() << "\n";
+    // std::cout << "Day 3_1: " << day3_1() << "\n";
+    // std::cout << "Day 3_2: " << day3_2() << "\n";
+    // std::cout << "Day 4_1: " << day4_1() << "\n";
+    // std::cout << "Day 4_2: " << day4_2() << "\n";
+    // std::cout << "Day 5_1: " << day5_1() << "\n";
+    // std::cout << "Day 5_2: " << day5_2() << "\n";
+    // std::cout << "Day 6_1: " << day6_1() << "\n";
+    // std::cout << "Day 6_2: " << day6_2() << "\n";
+    // std::cout << "Day 7_1: " << day7_1() << "\n";
+    // std::cout << "Day 7_2: " << day7_2() << "\n";
+    // std::cout << "Day 8_1: " << day8_1() << "\n";
+    // std::cout << "Day 8_2: " << day8_2() << "\n";
+    // std::cout << "Day 9_1: " << day9_1() << "\n";
+    // std::cout << "Day 9_2: " << day9_2() << "\n";
+    // std::cout << "Day 10_1: " << day10_1() << "\n";
+    // std::cout << "Day 10_2: "; day10_2(); std::cout << "\n";
+    // std::cout << "Day 11_1: " << day11_1() << "\n";
+    // std::cout << "Day 11_2: " << day11_2() << "\n";
+    // std::cout << "Day 12_1: " << day12_1() << "\n";
+    // std::cout << "Day 12_2: " << day12_2() << "\n";
+    // std::cout << "Day 13_1: " << day13_1() << "\n";
+    // std::cout << "Day 13_2: " << day13_2() << "\n";
+    // std::cout << "Day 14_1: " << day14_1() << "\n";
+    // std::cout << "Day 14_2: " << day14_2() << "\n";
+    // std::cout << "Day 15_1: " << day15_1() << "\n";
+    // std::cout << "Day 15_2: " << day15_2() << "\n"; //extremely slow
+    std::cout << "Day 18_1: " << day18_1() << "\n";
+    std::cout << "Day 18_2: " << day18_2() << "\n"; 
 }
