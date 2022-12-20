@@ -2168,6 +2168,213 @@ int day18_2()
     return 0;
 }
 
+template<typename T>
+struct Node
+{
+    T value{};
+    std::size_t startPos{};
+    std::shared_ptr<Node<T>> left = nullptr;
+    std::shared_ptr<Node<T>> right = nullptr;
+};
+
+int day20_1()
+{
+    std::ifstream input("day20.txt");
+    std::string line;
+    auto root = std::make_shared<Node<int>>();
+    std::shared_ptr<Node<int>> current = nullptr;
+    std::vector<int> ops{};
+    int c = 0;
+
+    while(std::getline(input, line))
+    {
+        if(!current)
+        {
+            root->value = std::stoi(line);
+            root->startPos = c++;
+            ops.push_back(root->value);
+            current = root;
+        }
+        else
+        {
+            auto node = std::make_shared<Node<int>>();
+            node->value = std::stoi(line);
+            ops.push_back(node->value);
+            node->startPos = c++;
+            node->left = current;
+            current->right = node;
+            current = node;
+        }
+    }
+    root->left = current;
+    current->right = root;
+
+    const auto swapNode = [](std::shared_ptr<Node<int>> n1, std::shared_ptr<Node<int>> n2)
+    {
+        int tVal = n1->value;
+        std::size_t tPos = n1->startPos;
+
+        n1->value = n2->value;
+        n1->startPos = n2->startPos;
+
+        n2->value = tVal;
+        n2->startPos = tPos;
+    };
+
+    const auto printLine = [&]()
+    {
+        std::cout<<"\n";
+        auto t = root;
+        do
+        {
+            std::cout << t->value << " ";
+            t = t->right;
+        } while (t != root);
+    };
+    //printLine();
+
+    for(int i = 0; i < ops.size(); i++)
+    {
+        auto s = root;
+        while(s->startPos != i){ s = s->right; }
+        for(int j = 0; j < std::abs(s->value) % (ops.size() - 1); j++)
+        {
+            if(s->value < 0)
+            {
+                swapNode(s, s->left);
+                s = s->left;
+            }
+            if(s->value > 0)
+            {
+                swapNode(s, s->right);
+                s = s->right;
+            }
+        }
+        //printLine();
+    }
+
+    //find start again
+    auto s = root;
+    while(s->value != 0){ s = s->right; }
+    root = s;
+
+   // printLine();
+
+    int sum = 0;
+    auto l = root;
+    for(int i = 0; i < 3; i++)
+    {
+        for(int j = 0; j < 1000; j++)
+        {
+            l = l->right;
+        }
+        sum += l->value;
+    }
+
+    return sum;
+}
+
+
+std::int64_t day20_2()
+{
+    std::ifstream input("day20.txt");
+    std::string line;
+    auto root = std::make_shared<Node<std::int64_t>>();
+    std::shared_ptr<Node<std::int64_t>> current = nullptr;
+    std::vector<int> ops{};
+    int c = 0;
+
+    while(std::getline(input, line))
+    {
+        if(!current)
+        {
+            root->value = (std::int64_t)(std::stoi(line)) * 811589153;
+            root->startPos = c++;
+            ops.push_back(root->value);
+            current = root;
+        }
+        else
+        {
+            auto node = std::make_shared<Node<std::int64_t>>();
+            node->value = (std::int64_t)(std::stoi(line)) * 811589153;
+            ops.push_back(node->value);
+            node->startPos = c++;
+            node->left = current;
+            current->right = node;
+            current = node;
+        }
+    }
+    root->left = current;
+    current->right = root;
+
+    const auto swapNode = [](std::shared_ptr<Node<std::int64_t>> n1, std::shared_ptr<Node<std::int64_t>> n2)
+    {
+        std::int64_t tVal = n1->value;
+        std::size_t tPos = n1->startPos;
+
+        n1->value = n2->value;
+        n1->startPos = n2->startPos;
+
+        n2->value = tVal;
+        n2->startPos = tPos;
+    };
+
+    const auto printLine = [&]()
+    {
+        std::cout<<"\n";
+        auto t = root;
+        do
+        {
+            std::cout << t->value << " ";
+            t = t->right;
+        } while (t != root);
+    };
+
+    //printLine();
+
+    for(int x = 0; x < 10; x++)
+    for(int i = 0; i < ops.size(); i++)
+    {
+        auto s = root;
+        while(s->startPos != i){ s = s->right; }
+        for(int j = 0; j < std::abs(s->value) % (ops.size() - 1); j++)
+        {
+            if(s->value < 0)
+            {
+                swapNode(s, s->left);
+                s = s->left;
+            }
+            if(s->value > 0)
+            {
+                swapNode(s, s->right);
+                s = s->right;
+            }
+        }
+        //printLine();
+    }
+
+    //find start again
+    auto s = root;
+    while(s->value != 0){ s = s->right; }
+    root = s;
+
+    //printLine();
+
+    std::int64_t sum = 0;
+    auto l = root;
+    for(int i = 0; i < 3; i++)
+    {
+        for(int j = 0; j < 1000; j++)
+        {
+            l = l->right;
+        }
+        sum += l->value;
+    }
+
+    return sum;
+}
+
+
 int main()
 {
     std::ios_base::sync_with_stdio(false); 
@@ -2201,6 +2408,8 @@ int main()
     // std::cout << "Day 14_2: " << day14_2() << "\n";
     // std::cout << "Day 15_1: " << day15_1() << "\n";
     // std::cout << "Day 15_2: " << day15_2() << "\n"; //extremely slow
-    std::cout << "Day 18_1: " << day18_1() << "\n";
-    std::cout << "Day 18_2: " << day18_2() << "\n"; 
+    // std::cout << "Day 18_1: " << day18_1() << "\n";
+    // std::cout << "Day 18_2: " << day18_2() << "\n"; 
+    std::cout << "Day 20_1: " << day20_1() << "\n";
+    std::cout << "Day 20_2: " << day20_2() << "\n"; 
 }
