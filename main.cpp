@@ -2374,6 +2374,74 @@ std::int64_t day20_2()
     return sum;
 }
 
+bool isNumber(std::string_view str)
+{
+    for(const auto c : str)
+    {
+        if(!std::isdigit(c))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+ std::int64_t day21_1()
+{
+    std::ifstream input("day21.txt");
+    std::string line;
+    std::unordered_map<std::string, std::variant<std::string, std::int64_t>> monkeys;
+
+    while(std::getline(input, line))
+    {
+        const auto spl = split(line, ": ");
+        if(isNumber(spl.at(1)))
+        {
+            monkeys[spl.at(0)] = std::stoi(spl.at(1));
+        }
+        else
+        {
+            monkeys[spl.at(0)] = spl.at(1);
+        }
+    }
+    
+                                                //recursive lambda trick
+    const auto solve = [&](const std::string& m, auto&& solve)-> std::int64_t
+    {
+        if(monkeys[m].index() == 1)
+        {
+            return std::get<std::int64_t>(monkeys[m]);
+        }else{
+            const auto instr = split(std::get<std::string>(monkeys[m]), " ");
+            if(instr.at(1) == "+")
+            {
+                return solve(instr[0], solve) + solve(instr[2], solve);
+            }
+            else if(instr.at(1) == "-")
+            {
+                return solve(instr[0], solve) - solve(instr[2], solve);
+            }
+            else if(instr.at(1) == "*")
+            {
+                return solve(instr[0], solve) * solve(instr[2], solve);
+            }
+            else
+            {
+                return solve(instr[0], solve) / solve(instr[2], solve);
+            }
+        }
+        return 0;
+    };
+
+    return solve("root", solve);
+}
+
+
+int day21_2()
+{
+
+    return 0;
+}
 
 int main()
 {
@@ -2410,6 +2478,8 @@ int main()
     // std::cout << "Day 15_2: " << day15_2() << "\n"; //extremely slow
     // std::cout << "Day 18_1: " << day18_1() << "\n";
     // std::cout << "Day 18_2: " << day18_2() << "\n"; 
-    std::cout << "Day 20_1: " << day20_1() << "\n";
-    std::cout << "Day 20_2: " << day20_2() << "\n"; 
+    // std::cout << "Day 20_1: " << day20_1() << "\n";
+    // std::cout << "Day 20_2: " << day20_2() << "\n"; 
+    std::cout << "Day 21_1: " << day21_1() << "\n";
+    std::cout << "Day 21_2: " << day21_2() << "\n"; 
 }
