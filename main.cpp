@@ -795,7 +795,7 @@ struct Vector
         return std::abs(x - other.x) + std::abs(y - other.y);
     }
     friend bool operator< (const auto& lhs, const auto& rhs){ return lhs.x < rhs.x || (lhs.x == rhs.x && lhs.y < rhs.y); } 
-    bool operator== (const auto& other){ return x == other.x && y == other.y; }
+    bool operator== (const auto& other) const{ return x == other.x && y == other.y; }
     bool operator!= (const auto& other){ return !operator==(other); }
     Vector<T> operator+ (const auto& other) { return {x + other.x, y + other.y}; }
     Vector<T> operator- (const auto& other) { return {x - other.x, y - other.y}; }
@@ -1758,6 +1758,15 @@ struct pair_hash {
     }
 };
 
+struct vec2_hash
+{
+    template<typename T>
+    std::size_t operator() (const Vector<T>& v) const
+    {
+        return std::hash<T>{}(v.x) ^ std::hash<T>{}(v.y);
+    }
+};
+
 int day14_1() //redone because map > vector for part 2
 {
     std::ifstream input("day14.txt");
@@ -2443,6 +2452,94 @@ int day21_2()
     return 0;
 }
 
+
+int day22_1()
+{
+    std::ifstream input("day22.txt");
+    std::string line;
+    std::unordered_map<Vec2i, bool, vec2_hash> map;
+    std::vector<std::variant<int, std::string>> instr;
+    Vec2i pos{};
+    const std::vector<Vec2i> directions{{1,0},{0,1},{-1,0},{0,-1}};
+    int dirIdx = 0;
+    Vec2i mapDim{};
+
+    int l = 0;
+    while(std::getline(input, line))
+    {
+        if(line.empty())
+        {
+            std::getline(input, line);
+            std::size_t startIdx = 0;
+            for(std::size_t i = 0; i < line.size(); i++)
+            {
+                if(!std::isdigit(line[i]))
+                {
+                    instr.push_back(std::stoi(line.substr(startIdx, i - startIdx)));
+                    instr.push_back(std::string{line[i]});
+                    startIdx = i+1;
+                }
+            }
+            instr.push_back(std::stoi(line.substr(startIdx, line.size() - startIdx)));
+            break;
+        }
+
+        for(int x = 0; x < line.size(); x++)
+        {
+            const auto c = line.at(x);
+            if(c != ' ')
+            {
+                static bool f = false;
+                if(!f){pos = {x,l}; f = true;}
+                mapDim = Vec2i{std::max(mapDim.x, x), std::max(mapDim.y, l)};
+                map[Vec2i{x, l}] = c == '#';
+            }
+        }
+
+        l++;
+    }
+
+    for(const auto c : instr)
+    {
+        if(c.index() == 1)
+        {
+            const auto d = std::get<std::string>(c);
+            if(d == "R")
+            {
+                dirIdx = (dirIdx + 1) % directions.size();
+            }
+            else
+            {
+                dirIdx = dirIdx - 1;
+                if(dirIdx < 0) dirIdx = directions.size();
+            }
+        }
+        else
+        {
+            for(int i = 0; i < std::get<int>(c); i++)
+            {
+                //next tile
+                Vec2i npos = pos;
+                do
+                {
+                    npos = npos + directions[dirIdx];
+                    npos.x = npos.x % mapDim.x;
+                    npos.y = npos.y % mapDim.y;
+                    if(npos.x < 0) npos.x = mapDim.x - 1;
+                    if(npos.y < 0) npos.y = mapDim.y - 1;
+                } while(!map.contains(npos));
+                if(!map[npos])
+                {
+                    pos = npos;
+                    //std::cout << "--> " << pos << "\n";
+                }
+            }
+        }
+    }
+
+    return 1000 * (pos.y+1) + 4 * (pos.x+1) + dirIdx;
+}
+
 int main()
 {
     std::ios_base::sync_with_stdio(false); 
@@ -2482,4 +2579,5 @@ int main()
     // std::cout << "Day 20_2: " << day20_2() << "\n"; 
     std::cout << "Day 21_1: " << day21_1() << "\n";
     std::cout << "Day 21_2: " << day21_2() << "\n"; 
+    std::cout << "Day 22_1: " << day22_1() << "\n"; 
 }
