@@ -7,6 +7,7 @@
 #include <map>
 #include <sstream>
 #include <set>
+#include <unordered_set>
 #include <stack>
 #include <variant>
 #include <array>
@@ -795,10 +796,10 @@ struct Vector
         return std::abs(x - other.x) + std::abs(y - other.y);
     }
     friend bool operator< (const auto& lhs, const auto& rhs){ return lhs.x < rhs.x || (lhs.x == rhs.x && lhs.y < rhs.y); } 
-    bool operator== (const auto& other) const{ return x == other.x && y == other.y; }
-    bool operator!= (const auto& other){ return !operator==(other); }
-    Vector<T> operator+ (const auto& other) { return {x + other.x, y + other.y}; }
-    Vector<T> operator- (const auto& other) { return {x - other.x, y - other.y}; }
+    bool operator== (const auto& other) const { return x == other.x && y == other.y; }
+    bool operator!= (const auto& other) const { return !operator==(other); }
+    Vector<T> operator+ (const auto& other) const { return {x + other.x, y + other.y}; }
+    Vector<T> operator- (const auto& other) const { return {x - other.x, y - other.y}; }
     Vector<T>& operator-= (const auto& other) { x -= other.x; y -= other.y; return *this; }
     Vector<T>& operator+= (const auto& other) { x += other.x; y += other.y; return *this; }
     friend std::ostream& operator<< (std::ostream& os, const auto& value){os << value.x << " | " << value.y; return os;}
@@ -2446,13 +2447,6 @@ bool isNumber(std::string_view str)
 }
 
 
-int day21_2()
-{
-
-    return 0;
-}
-
-
 int day22_1()
 {
     std::ifstream input("day22.txt");
@@ -2540,6 +2534,282 @@ int day22_1()
     return 1000 * (pos.y+1) + 4 * (pos.x+1) + dirIdx;
 }
 
+
+struct Elf
+{
+    Elf(const Vec2i& p, const Vec2i& t) : pos(p), target(t) {}
+    Vec2i pos{};
+    Vec2i target{};
+    bool stuck = false;
+    std::vector<int> ops{0,1,2,3};
+};
+
+
+int day23_1()
+{
+    std::ifstream input("day23.txt");
+    std::string line;
+    std::vector<Elf> elves;
+    
+    int y = 0;
+    while(std::getline(input, line))
+    {
+        for(int x = 0; x < line.size(); x++)
+        {
+            if(line[x] == '#')
+            {
+                elves.emplace_back(Vec2i{x,y}, Vec2i{INT_MAX,INT_MAX});
+            }
+        }
+        ++y;
+    }
+
+    const std::vector<std::vector<Vec2i>> dirs = {
+        {Vec2i{-1,-1}, Vec2i{0, -1}, Vec2i{1, -1}},
+        {Vec2i{-1,1}, Vec2i{0, 1}, Vec2i{1, 1}},
+        {Vec2i{-1,-1}, Vec2i{-1 , 0}, Vec2i{-1, 1}},
+        {Vec2i{1,-1}, Vec2i{1, 0}, Vec2i{1, 1}}
+                    };
+
+    for(int r = 0; r < 10; r++)
+    {
+        std::unordered_map<Vec2i, int, vec2_hash> moves;
+        std::unordered_set<Vec2i, vec2_hash> elfPos;
+
+        for(const auto& e : elves)
+        {
+            elfPos.insert(e.pos);
+        }
+        //propose move
+        for(auto& e : elves)
+        {
+            e.stuck = false;
+            if( !elfPos.contains(e.pos + Vec2i{0,-1}) &&
+                !elfPos.contains(e.pos + Vec2i{1,-1}) &&
+                !elfPos.contains(e.pos + Vec2i{1,0}) &&
+                !elfPos.contains(e.pos + Vec2i{1,1}) &&
+                !elfPos.contains(e.pos + Vec2i{0,1}) &&
+                !elfPos.contains(e.pos + Vec2i{-1,1}) &&
+                !elfPos.contains(e.pos + Vec2i{-1,0}) &&
+                !elfPos.contains(e.pos + Vec2i{-1,-1}))
+            {
+                e.target = e.pos;
+                moves[e.pos]++;
+                e.stuck = true;
+                continue;
+            }
+
+            int m = 0;
+            for(const auto op : e.ops)
+            {
+                if( !elfPos.contains(e.pos + dirs[op][0]) &&
+                    !elfPos.contains(e.pos + dirs[op][1]) &&
+                    !elfPos.contains(e.pos + dirs[op][2]))
+                {
+                    const auto n = e.pos + dirs[op][1];
+                    e.target = n;
+                    moves[n]++;
+                    break;
+                }
+                m++;
+            }
+            
+        }
+
+        for(auto& e : elves)
+        {
+            if(moves[e.target] == 1)
+            {
+                e.pos = e.target;
+            }
+            // if(!e.stuck)
+            // {
+                const auto tmp = e.ops[0];
+                e.ops.erase(e.ops.begin());
+                e.ops.push_back(tmp);
+            //}
+
+        }
+
+        elfPos.clear();
+        for(const auto& e : elves)
+        {
+            elfPos.insert(e.pos);
+        }
+
+        Vec2i tl{INT_MAX, INT_MAX};
+        Vec2i br{-INT_MAX, -INT_MAX};
+
+        for(const auto& e : elves)
+        {
+            tl = Vec2i{std::min(tl.x, e.pos.x), std::min(tl.y, e.pos.y)};
+            br = Vec2i{std::max(br.x, e.pos.x), std::max(br.y, e.pos.y)};
+        }
+
+        // std::cout << "\n";
+        // for(int y = tl.y; y < br.y+1; y++)
+        // {
+        //     for(int x = tl.x; x < br.x+1; x++)
+        //     {
+        //         if(elfPos.contains(Vec2i{x,y}))
+        //         {
+        //             std::cout << '#';
+        //             continue;
+        //         }
+        //         std::cout << '.';
+        //     }
+        //     std::cout << "\n";
+        // }
+
+    }
+
+    Vec2i tl{INT_MAX, INT_MAX};
+    Vec2i br{-INT_MAX, -INT_MAX};
+
+    for(const auto& e : elves)
+    {
+        tl = Vec2i{std::min(tl.x, e.pos.x), std::min(tl.y, e.pos.y)};
+        br = Vec2i{std::max(br.x, e.pos.x), std::max(br.y, e.pos.y)};
+    }
+
+    return (br.y - tl.y + 1) * (br.x - tl.x + 1) - elves.size();
+}
+
+
+int day23_2()
+{
+    std::ifstream input("day23.txt");
+    std::string line;
+    std::vector<Elf> elves;
+    
+    int y = 0;
+    while(std::getline(input, line))
+    {
+        for(int x = 0; x < line.size(); x++)
+        {
+            if(line[x] == '#')
+            {
+                elves.emplace_back(Vec2i{x,y}, Vec2i{INT_MAX,INT_MAX});
+            }
+        }
+        ++y;
+    }
+
+    const std::vector<std::vector<Vec2i>> dirs = {
+        {Vec2i{-1,-1}, Vec2i{0, -1}, Vec2i{1, -1}},
+        {Vec2i{-1,1}, Vec2i{0, 1}, Vec2i{1, 1}},
+        {Vec2i{-1,-1}, Vec2i{-1 , 0}, Vec2i{-1, 1}},
+        {Vec2i{1,-1}, Vec2i{1, 0}, Vec2i{1, 1}}
+                    };
+
+    int rc = 1;
+
+    while(true)
+    {
+        std::unordered_map<Vec2i, int, vec2_hash> moves;
+        std::unordered_set<Vec2i, vec2_hash> elfPos;
+
+        for(const auto& e : elves)
+        {
+            elfPos.insert(e.pos);
+        }
+        //propose move
+        for(auto& e : elves)
+        {
+            e.stuck = false;
+            if( !elfPos.contains(e.pos + Vec2i{0,-1}) &&
+                !elfPos.contains(e.pos + Vec2i{1,-1}) &&
+                !elfPos.contains(e.pos + Vec2i{1,0}) &&
+                !elfPos.contains(e.pos + Vec2i{1,1}) &&
+                !elfPos.contains(e.pos + Vec2i{0,1}) &&
+                !elfPos.contains(e.pos + Vec2i{-1,1}) &&
+                !elfPos.contains(e.pos + Vec2i{-1,0}) &&
+                !elfPos.contains(e.pos + Vec2i{-1,-1}))
+            {
+                e.target = e.pos;
+                moves[e.pos]++;
+                e.stuck = true;
+                continue;
+            }
+
+            int m = 0;
+            for(const auto op : e.ops)
+            {
+                if( !elfPos.contains(e.pos + dirs[op][0]) &&
+                    !elfPos.contains(e.pos + dirs[op][1]) &&
+                    !elfPos.contains(e.pos + dirs[op][2]))
+                {
+                    const auto n = e.pos + dirs[op][1];
+                    e.target = n;
+                    moves[n]++;
+                    break;
+                }
+                m++;
+            }
+            
+        }
+
+        int mc = 0;
+        for(auto& e : elves)
+        {
+            if(moves[e.target] == 1)
+            {
+                if(e.pos != e.target) mc++;
+                e.pos = e.target;
+            }
+            // if(!e.stuck)
+            // {
+                const auto tmp = e.ops[0];
+                e.ops.erase(e.ops.begin());
+                e.ops.push_back(tmp);
+            //}
+
+        }
+
+        if(mc == 0)
+        {
+            goto out;
+        }
+
+        elfPos.clear();
+        for(const auto& e : elves)
+        {
+            elfPos.insert(e.pos);
+        }
+
+        Vec2i tl{INT_MAX, INT_MAX};
+        Vec2i br{-INT_MAX, -INT_MAX};
+
+        for(const auto& e : elves)
+        {
+            tl = Vec2i{std::min(tl.x, e.pos.x), std::min(tl.y, e.pos.y)};
+            br = Vec2i{std::max(br.x, e.pos.x), std::max(br.y, e.pos.y)};
+        }
+
+        // std::cout << "\n";
+        // for(int y = tl.y; y < br.y+1; y++)
+        // {
+        //     for(int x = tl.x; x < br.x+1; x++)
+        //     {
+        //         if(elfPos.contains(Vec2i{x,y}))
+        //         {
+        //             std::cout << '#';
+        //             continue;
+        //         }
+        //         std::cout << '.';
+        //     }
+        //     std::cout << "\n";
+        // }
+
+        rc++;
+    }
+
+    out:
+
+    return rc;
+}
+
+
 int main()
 {
     std::ios_base::sync_with_stdio(false); 
@@ -2578,6 +2848,7 @@ int main()
     // std::cout << "Day 20_1: " << day20_1() << "\n";
     // std::cout << "Day 20_2: " << day20_2() << "\n"; 
     std::cout << "Day 21_1: " << day21_1() << "\n";
-    std::cout << "Day 21_2: " << day21_2() << "\n"; 
     std::cout << "Day 22_1: " << day22_1() << "\n"; 
+    std::cout << "Day 23_1: " << day23_1() << "\n"; 
+    std::cout << "Day 23_2: " << day23_2() << "\n"; 
 }
